@@ -1,0 +1,1 @@
+{"app":"clojure -A:dev -M cdk/basic/cdk.clj"}

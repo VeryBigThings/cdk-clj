@@ -1,0 +1,35 @@
+name: build
+on: [push, pull_request]
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: DeLaGuardo/clojure-lint-action@v1
+        with:
+          clj-kondo-args: --lint .
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1 
+      - name: Prepare java
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - name: Install clojure tools
+        uses: DeLaGuardo/setup-clojure@9.5
+        with:
+          cli: 1.10.3.1058
+      - name: Cache clojure dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.gitlibs
+            ~/.deps.clj
+          key: cljdeps-${{ hashFiles('deps.edn') }}
+          restore-keys: cljdeps-
+      - run: clojure -M:dev:test

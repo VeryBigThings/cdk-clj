@@ -1,0 +1,10 @@
+{:paths   ["resources" "src"]
+ :deps    {org.clojure/clojure                 {:mvn/version "1.11.1"}
+           software.amazon.awscdk/aws-cdk-lib         {:mvn/version "2.41.0"}}
+ :aliases {:dev  {:extra-paths ["test"]
+                  :extra-deps  {clj-kondo/clj-kondo {:mvn/version "2022.09.08"}
+                                com.cognitect/test-runner
+                                {:git/url "https://github.com/cognitect-labs/test-runner.git"
+                                 :sha     "a522ab2851a2aa5bf9c22a942b45287a3a019310"}}}
+           :lint {:main-opts ["-m" "clj-kondo.main" "--lint" "."]}
+           :test {:main-opts ["-m" "cognitect.test-runner"]}}}
