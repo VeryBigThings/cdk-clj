@@ -67,6 +67,7 @@
      (filter #(contains? (:flags %) :public))
      (filter #(contains? (:flags %) :static))
      (filter #(not (contains? (:flags %) :enum)))
+     (filter #(not (contains? (:flags %) :final)))
      (map #(:name %))
      distinct)))
 
@@ -78,6 +79,28 @@
        static-method
        (fn [& args]
          (clojure.lang.Reflector/invokeStaticMethod class-fqn (name static-method) (to-array args)))))))
+
+(defn- get-static-fields [class-fqn]
+  (let [class-fqn-symbol (eval `~(symbol class-fqn))]
+    (->>
+     class-fqn-symbol
+     r/reflect
+     :members
+     (filter #(contains? (:flags %) :public))
+     (filter #(contains? (:flags %) :static))
+     (filter #(contains? (:flags %) :final))
+     (filter #(not (contains? (:flags %) :enum)))
+     (map #(:name %))
+     distinct)))
+
+(defn- intern-static-fields [target-ns-sym class-fqn]
+  (let [methods (get-static-fields class-fqn)]
+    (doseq [static-method methods]
+      (intern
+       target-ns-sym
+       static-method
+       (fn []
+         (clojure.lang.Reflector/getStaticField class-fqn (name static-method)))))))
 
 (defn- get-class-fqn [module class]
   (let [package (case module
@@ -111,6 +134,7 @@
     (ns-unmap impl-ns-sym class-sym)
     (intern-initializator impl-ns-sym class-sym class-fqn)
     (intern-static-methods target-ns-sym class-fqn)
+    (intern-static-fields target-ns-sym class-fqn)
     (intern-enum-members target-ns-sym class-fqn)
     (alias alias-sym target-ns-sym)
     (ns-unmap *ns* alias-sym)
