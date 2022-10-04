@@ -143,7 +143,12 @@
            :rename {class-sym alias-sym})))
 
 (defn get [object key]
-  (key (bean object)))
+  (let [keys (list key)
+        keys' (flatten keys)]
+    (reduce
+     #(%2 (bean %1))
+     object
+     keys')))
 
 (defmacro import
   [& imports]
