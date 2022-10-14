@@ -1,6 +1,6 @@
 {:paths   ["resources" "src"]
  :deps    {org.clojure/clojure                 {:mvn/version "1.11.1"}
-           software.amazon.awscdk/aws-cdk-lib         {:mvn/version "2.41.0"}}
+           software.amazon.awscdk/aws-cdk-lib         {:mvn/version "2.46.0"}}
  :aliases {:dev  {:extra-paths ["test"]
                   :extra-deps  {clj-kondo/clj-kondo {:mvn/version "2022.09.08"}
                                 com.cognitect/test-runner
