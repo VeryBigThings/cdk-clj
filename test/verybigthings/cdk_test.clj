@@ -3,7 +3,7 @@
             [verybigthings.cdk :as cdk]))
 
 (cdk/import [[Stack] :from "core"]
-            [[BucketAccessControl] :from "s3"]
+            [[Bucket BucketAccessControl] :from "s3"]
             [[DatabaseInstanceEngine] :from "rds"])
 
 (deftest cdk
@@ -21,4 +21,8 @@
   (testing "calling enum member"
     (is BucketAccessControl/PRIVATE))
   (testing "calling static field"
-    (is (DatabaseInstanceEngine/POSTGRES))))
+    (is (DatabaseInstanceEngine/POSTGRES)))
+  (testing "calling instance member"
+    (let [stack (Stack nil "name")
+          bucket (Bucket stack "bucket")]
+      (is (Bucket/getBucketArn bucket)))))

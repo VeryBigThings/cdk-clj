@@ -121,6 +121,44 @@
        (fn []
          (clojure.lang.Reflector/getStaticField class-fqn (name static-method)))))))
 
+(defn- get-member-methods [class-fqn]
+  (let [class-fqn-symbol (eval `~(symbol class-fqn))]
+    (->>
+     class-fqn-symbol
+     r/reflect
+     :members
+     (filter #(contains? (:flags %) :public))
+     (filter #(not (= (name (:name %)) class-fqn)))
+     (filter #(not (contains? (:flags %) :static)))
+     (map #(:name %))
+     distinct)))
+
+(defn- intern-base-class-methods [target-ns-sym class-fqn]
+  (let [bases (bases (Class/forName class-fqn))
+        bases' (filter #(clojure.string/includes? (str %) "awscdk") bases)]
+    (doseq [base bases']
+      (let [methods (get-member-methods (.getCanonicalName base))]
+        (doseq [method methods]
+          (intern
+           target-ns-sym
+           method
+           (fn [& args]
+             (let [o (first args)
+                   props (drop 1 args)]
+               (clojure.lang.Reflector/invokeInstanceMethod o (name method) (to-array props))))))))))
+
+(defn- intern-member-methods [target-ns-sym class-fqn]
+  (let [methods (get-member-methods class-fqn)]
+    (doseq [method methods]
+      (intern
+       target-ns-sym
+       method
+       (fn [& args]
+         (let [o (first args)
+               props (drop 1 args)]
+           (clojure.lang.Reflector/invokeInstanceMethod o (name method) (to-array props))))))
+    (intern-base-class-methods target-ns-sym class-fqn)))
+
 (defn- get-class-fqn [module class]
   (let [package (case module
                   "core" "software.amazon.awscdk"
@@ -154,6 +192,7 @@
     (intern-initializator impl-ns-sym class-sym class-fqn)
     (intern-static-methods target-ns-sym class-fqn)
     (intern-static-fields target-ns-sym class-fqn)
+    (intern-member-methods target-ns-sym class-fqn)
     (intern-enum-members target-ns-sym class-fqn)
     (alias alias-sym target-ns-sym)
     (ns-unmap *ns* alias-sym)

@@ -88,6 +88,15 @@ cdk ls
 (Source/asset "./resources/public")
 ```
 
+**Call instance method**
+``` clojure
+(cdk/import [[Bucket] :from "s3"])
+;; Refer to the src directory as an asset to be uploaded
+(let [stack (Stack nil "name")
+      bucket (Bucket stack "bucket")]
+  (is (Bucket/getBucketArn bucket)))
+```
+
 **Call enum member**
 ``` clojure
 (cdk/import [[BucketAccessControl] :from "s3"])
