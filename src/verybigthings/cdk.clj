@@ -36,27 +36,46 @@
      seq
      boolean)))
 
-(defn- get-object [class-fqn create-props]
-  (if (has-builder-method? class-fqn)
-    (clojure.lang.Reflector/invokeStaticMethod class-fqn "builder" (to-array create-props))
-    (let [class-builder-sym (str class-fqn "$Builder")]
-      (clojure.lang.Reflector/invokeStaticMethod class-builder-sym "create" (to-array create-props)))))
-
 (defn- extract-props [props]
   (let [config (last props)]
     (if (map? config)
       [(drop-last props) config]
       [props {}])))
 
+(defn- get-type [class-fqn]
+  (if (has-builder-method? class-fqn)
+    :builder
+    (let [class-builder-sym (str class-fqn "$Builder")]
+      (try
+        (Class/forName class-builder-sym)
+        :builder
+        (catch ClassNotFoundException _
+          :constructor)))))
+
+(defn- get-builder-class-fqn-and-method [class-fqn]
+  (if (has-builder-method? class-fqn)
+    [class-fqn "builder"]
+    [(str class-fqn "$Builder") "create"]))
+
+(defmulti ^:private init-object (fn [type _ _] type))
+(defmethod init-object :constructor [_ class-fqn props]
+  (clojure.lang.Reflector/invokeConstructor (eval `~(symbol class-fqn)) (to-array props)))
+(defmethod init-object :builder [_ class-fqn props]
+  (let [[create-props static-method-props] (extract-props props)
+        [builder-class-fqn method] (get-builder-class-fqn-and-method class-fqn)]
+    (->
+     builder-class-fqn
+     (clojure.lang.Reflector/invokeStaticMethod method (to-array create-props))
+     (apply-methods static-method-props)
+     (.build))))
+
 (defn- intern-initializator [impl-ns-sym class-sym class-fqn]
   (intern
    impl-ns-sym
    class-sym
    (fn [& props]
-     (let [[create-props static-method-props] (extract-props props)
-           object (get-object class-fqn create-props)
-           object' (apply-methods object static-method-props)]
-       (.build object')))))
+     (let [type (get-type class-fqn)]
+       (init-object type class-fqn props)))))
 
 (defn- get-static-method-names [class-fqn]
   (let [class-fqn-symbol (eval `~(symbol class-fqn))]

@@ -1,5 +1,5 @@
 {:paths   ["src"]
  :deps    {org.clojure/clojure {:mvn/version "1.11.1"}}
  :aliases {:dev     {:extra-paths ["cdk"]
-                     :extra-deps  {software.amazon.awscdk/s3     {:mvn/version "1.172.0"}
+                     :extra-deps  {software.amazon.awscdk/s3     {:mvn/version "1.176.0"}
                                    verybigthings/cdk-clj         {:local/root "../../"}}}}}

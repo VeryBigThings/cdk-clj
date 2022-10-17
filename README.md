@@ -21,7 +21,7 @@
                                               :sha     "<LATEST SHA HERE>"}
                                ;; Required in order to use the "s3" module below
                                ;; List of all available modules [here](https://search.maven.org/search?q=software.amazon.awscdk)
-                               software.amazon.awscdk/s3 {:mvn/version "1.172.0"}
+                               software.amazon.awscdk/s3 {:mvn/version "1.176.0"}
                                }}}}
 ```
 
